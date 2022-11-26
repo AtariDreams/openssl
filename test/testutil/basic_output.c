@@ -90,7 +90,7 @@ static ossl_inline void test_io_unlock(void)
 #endif
 }
 
-int test_vprintf_stdout(const char *fmt, va_list ap)
+int test_vprintf_stdout(const char *__restrict fmt, va_list ap)
 {
     int r;
 
@@ -101,7 +101,7 @@ int test_vprintf_stdout(const char *fmt, va_list ap)
     return r;
 }
 
-int test_vprintf_stderr(const char *fmt, va_list ap)
+int test_vprintf_stderr(const char *__restrict fmt, va_list ap)
 {
     int r;
 
@@ -134,7 +134,7 @@ int test_flush_stderr(void)
     return r;
 }
 
-int test_vprintf_tapout(const char *fmt, va_list ap)
+int test_vprintf_tapout(const char *__restrict fmt, va_list ap)
 {
     int r;
 
@@ -145,7 +145,7 @@ int test_vprintf_tapout(const char *fmt, va_list ap)
     return r;
 }
 
-int test_vprintf_taperr(const char *fmt, va_list ap)
+int test_vprintf_taperr(const char *__restrict fmt, va_list ap)
 {
     int r;
 
