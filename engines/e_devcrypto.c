@@ -304,8 +304,7 @@ static int cipher_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             nblocks = (inl + cipher_ctx->blocksize - 1)
                       / cipher_ctx->blocksize;
             do {
-                ivlen--;
-                nblocks += iv[ivlen];
+                nblocks += iv[--ivlen];
                 iv[ivlen] = (uint8_t) nblocks;
                 nblocks >>= 8;
             } while (ivlen);
@@ -324,19 +323,19 @@ static int ctr_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 {
     struct cipher_ctx *cipher_ctx =
         (struct cipher_ctx *)EVP_CIPHER_CTX_get_cipher_data(ctx);
-    size_t nblocks, len;
+    size_t len;
 
     /* initial partial block */
     while (cipher_ctx->num && inl) {
-        (*out++) = *(in++) ^ cipher_ctx->partial[cipher_ctx->num];
+        (*out++) = *(in++) ^ cipher_ctx->partial[cipher_ctx->num++];
+        if (cipher_ctx->num >= cipher_ctx->blocksize)
+            cipher_ctx->num = 0;
         --inl;
-        cipher_ctx->num = (cipher_ctx->num + 1) % cipher_ctx->blocksize;
     }
 
     /* full blocks */
-    if (inl > (unsigned int) cipher_ctx->blocksize) {
-        nblocks = inl/cipher_ctx->blocksize;
-        len = nblocks * cipher_ctx->blocksize;
+    if (inl > cipher_ctx->blocksize) {
+        len = inl - (inl % cipher_ctx->blocksize);
         if (cipher_do_cipher(ctx, out, in, len) < 1)
             return 0;
         inl -= len;
@@ -350,11 +349,11 @@ static int ctr_do_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         if (cipher_do_cipher(ctx, cipher_ctx->partial, cipher_ctx->partial,
             cipher_ctx->blocksize) < 1)
             return 0;
-        while (inl--) {
+        do {
             out[cipher_ctx->num] = in[cipher_ctx->num]
                                    ^ cipher_ctx->partial[cipher_ctx->num];
             cipher_ctx->num++;
-        }
+        } while (--inl);
     }
 
     return 1;
